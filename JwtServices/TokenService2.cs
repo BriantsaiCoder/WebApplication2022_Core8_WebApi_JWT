@@ -23,13 +23,13 @@ namespace WebApplication2022_Core8_WebApi_JWT.JwtServices
     {
         public static string CreateToken(DbUser user)
         {   //                                                    ********* HomeWork（回家作業）需自己修改
-            var key = Encoding.UTF8.GetBytes(Settings.Secret);  
+            var key = Encoding.UTF8.GetBytes(LegacySettings.Secret);  
             var descriptor = new SecurityTokenDescriptor
             {
                 // 在token裡面搭配 Claims來存放「帳號」、「角色、群組」等個人資料。
                 Subject = new ClaimsIdentity(new Claim[]     {
-                    new Claim(ClaimTypes.Name, user.UserName.ToString()),
-                    new Claim(ClaimTypes.Role,    user.UserRank.ToString())   // 這名使用者的角色、群組
+                    new Claim(ClaimTypes.Name, user.UserName?.ToString() ?? string.Empty),
+                    new Claim(ClaimTypes.Role, user.UserRank?.ToString() ?? string.Empty)   // 這名使用者的角色、群組
                     //                                                     ***************** HomeWork（回家作業）需自己修改
                 }),
 

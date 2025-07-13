@@ -711,3 +711,17 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 
+
+
+# ===== SECURITY ADDITIONS =====
+# Additional protections for sensitive configuration files
+*.production.json
+secrets.json
+*.secrets.*
+.env
+.env.local
+.env.production
+*.key
+*.cert
+*.crt
+appsettings.Production.json

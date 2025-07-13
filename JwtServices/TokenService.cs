@@ -20,16 +20,16 @@ namespace WebApplication2022_Core8_WebApi_JWT.JwtServices
 
         public static string CreateToken(UserTable user)
         {
-            var key = Encoding.UTF8.GetBytes(Settings.Secret);  
-            // 位於 /JwtServices目錄下的 Settings類別 （搭配 System.Text命名空間）
+            var key = Encoding.UTF8.GetBytes(LegacySettings.Secret);  
+            // 使用更安全的密鑰並改用 LegacySettings
 
             var descriptor = new SecurityTokenDescriptor
             {
                 // 如果您沒有學過之前的「 .NET Core會員登入 (ClaimsIdentity)」課程，這裡就卡住了。
                 // 在token裡面搭配 Claims來存放「帳號」、「角色、群組」等個人資料。
                 Subject = new ClaimsIdentity(new Claim[]     {
-                    new Claim(ClaimTypes.Name, user.UserName.ToString()),
-                    new Claim(ClaimTypes.Role,    user.UserId.ToString())   // 將來可用於存放  這名使用者的角色、群組 (Role)
+                    new Claim(ClaimTypes.Name, user.UserName?.ToString() ?? string.Empty),
+                    new Claim(ClaimTypes.Role, user.UserId.ToString())   // 將來可用於存放  這名使用者的角色、群組 (Role)
 
                     // 如果您要用 JwtRegisteredClaim，請看 https://blog.poychang.net/authenticating-jwt-tokens-in-asp-net-core-webapi/
                     //new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Sub,  user.UserName),
