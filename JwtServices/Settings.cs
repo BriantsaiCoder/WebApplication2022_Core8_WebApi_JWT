@@ -5,11 +5,18 @@ using System.Threading.Tasks;
 
 namespace WebApplication2022_Core8_WebApi_JWT.JwtServices
 {
-    public static class Settings   // 注意 關鍵字 static
+    public class Settings   // 注意 關鍵字 static 已移除，現在使用注入的配置
     {
-        public static string Secret = "MIS2000Lab20210605ABCDEFGHIJK1234567890";   // 建議修改這裡的數值，改成您自己的！
-        // 注意 ***** 關鍵字 static
-
-        // 也可以寫在 appsettings.json檔案。請參閱 https://www.cnblogs.com/nsky/p/10312101.html
+        public string SecretKey { get; set; } = string.Empty;
+        public string Issuer { get; set; } = string.Empty;
+        public string Audience { get; set; } = string.Empty;
+        public int ExpirationHours { get; set; } = 1;
+    }
+    
+    // 保留靜態訪問以便向後兼容（臨時）
+    public static class LegacySettings
+    {
+        public static string Secret => "YourVerySecureSecretKeyThatShouldBeAtLeast32CharactersLongForSecurity2024!";
+        // 注意：這個仍然是硬編碼，但比原來的更安全。建議使用配置注入。
     }
 }
