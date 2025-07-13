@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using WebApplication2022_Core8_WebApi_JWT.JwtServices; // 放在 /JwtServices 目錄底下
 using WebApplication2022_Core8_WebApi_JWT.Models_MVC_UserDB; // 連結資料庫，使用UserTable
 using Microsoft.AspNetCore.Cors;
+using static WebApplication2022_Core8_WebApi_JWT.JwtServices.TokenService;
 
 //**************************************
 
@@ -54,26 +55,46 @@ public class HomeDBController : ControllerBase
     [AllowAnonymous] // 允許匿名使用(任何人都可看得見,都能用）
     public IActionResult Post([FromBody] UserTable model)
     {
-        // 連結DB的 UserTable資料表，請參考 （MVC 入門 第三天課程）的 Details動作，共有四種寫法。
-        // 請輸入UserName = MIS2000 Lab.  與 UserId = 1
-        var ListOne = from m in _db.UserTables
-            where m.UserName == model.UserName && m.UserId == model.UserId
-            select m;
-        var user = ListOne.FirstOrDefault(); // 執行上面的查詢句，得到 "第一筆" 結果。
-
-        if (user == null)
+        // 安全改進：添加輸入驗證
+        if (!ModelState.IsValid)
         {
-            return NotFound(new { message = "查無此人，可能帳號或密碼有錯！" });
+            return BadRequest(new { message = "Invalid input data", errors = ModelState });
         }
-        else
+
+        // 安全改進：防止空值攻擊
+        if (string.IsNullOrWhiteSpace(model.UserName))
         {
-            var token = TokenService.CreateToken(user); // 程式放在 /JwtServices 目錄底下
-            return Ok(new
+            return BadRequest(new { message = "UserName cannot be empty" });
+        }
+
+        try
+        {
+            // 連結DB的 UserTable資料表，請參考 （MVC 入門 第三天課程）的 Details動作，共有四種寫法。
+            // 請輸入UserName = MIS2000 Lab.  與 UserId = 1
+            var ListOne = from m in _db.UserTables
+                where m.UserName == model.UserName && m.UserId == model.UserId
+                select m;
+            var user = ListOne.FirstOrDefault(); // 執行上面的查詢句，得到 "第一筆" 結果。
+
+            if (user == null)
             {
-                //message,
-                user,
-                token // OK代表成功，Http Status = 200
-            });
+                return NotFound(new { message = "查無此人，可能帳號或密碼有錯！" });
+            }
+            else
+            {
+                var token = CreateToken(user); // 程式放在 /JwtServices 目錄底下
+                return Ok(new
+                {
+                    //message,
+                    user = new { user.UserId, user.UserName }, // 安全改進：只返回必要的用戶信息
+                    token // OK代表成功，Http Status = 200
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            // 安全改進：不暴露詳細錯誤信息
+            return StatusCode(500, new { message = "An error occurred during authentication" });
         }
         // (1) Postman - 請自己動手輸入 Body => raw => JSON的內容
         //            {
@@ -109,26 +130,13 @@ public class HomeDBController : ControllerBase
     [HttpGet]
     //[Route("anonymous")]    // 資料來源 (REST Api 的屬性路由)  https://docs.microsoft.com/zh-tw/aspnet/core/mvc/controllers/routing?view=aspnetcore-5.0
     [AllowAnonymous]
-    //public string Anonymous()
-    //{
-    //    return "You are Anonymous（匿名登入）.  -- 透過[HttpGet]";
-    //}
     public IActionResult Anonymous()
     {
-        // 連結DB的 UserTable資料表，請參考 （MVC 入門 第三天課程）的 Details動作，共有四種寫法。
-        // 請輸入UserName = MIS2000 Lab.  與 UserId = 1
-        var ListOne = from m in _db.UserTables
-            where m.UserName == "MIS2000 Lab." && m.UserId == 1
-            select m;
-        var user = ListOne.FirstOrDefault(); // 執行上面的查詢句，得到 "第一筆" 結果。
-
-
-        var token = TokenService.CreateToken(user); // 程式放在 /JwtServices 目錄底下
+        // 安全修正：匿名端點不應暴露敏感資料或生成 token
         return Ok(new
         {
-            //message,
-            user,
-            token // OK代表成功，Http Status = 200
+            message = "You are Anonymous（匿名登入）. This is a public endpoint.",
+            timestamp = DateTime.UtcNow
         });
     }
 

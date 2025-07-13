@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using WebApplication2022_Core8_WebApi_JWT.JwtServices;     // 放在 /JwtServices 目錄底下
 using WebApplication2022_Core8_WebApi_JWT.Models_MVC_UserDB;     // 連結資料庫，使用UserTable（第一個範例沒用到資料庫）
 using Microsoft.AspNetCore.Cors;
+using static WebApplication2022_Core8_WebApi_JWT.JwtServices.TokenService;
 //**************************************
 
 
@@ -33,13 +34,33 @@ namespace WebApplication2022_Core8_WebApi_JWT.Controllers
         [AllowAnonymous]
         public IActionResult Post([FromBody] UserTable user)
         {
-                string token = TokenService.CreateToken(user);   // 放在 /JwtServices 目錄底下
+            // 安全改進：添加輸入驗證
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { message = "Invalid input data", errors = ModelState });
+            }
+
+            // 安全改進：防止空值攻擊
+            if (string.IsNullOrWhiteSpace(user.UserName))
+            {
+                return BadRequest(new { message = "UserName cannot be empty" });
+            }
+
+            try
+            {
+                string token = CreateToken(user);   // 放在 /JwtServices 目錄底下
                 return Ok(new
                 {
                     //message,    // OK代表成功，Http Status = 200
-                    user,            // user 代表 ViewModel。位於 /Models_MVC_UserDB目錄下的 UserTable.cs小類別
+                    user = new { user.UserId, user.UserName }, // 安全改進：只返回必要的用戶信息
                     token
                 });
+            }
+            catch (Exception ex)
+            {
+                // 安全改進：不暴露詳細錯誤信息
+                return StatusCode(500, new { message = "An error occurred during token generation" });
+            }
 
             // Postman - 請輸入 Body => raw => JSON的內容
             //{
